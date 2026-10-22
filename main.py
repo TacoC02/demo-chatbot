@@ -17,15 +17,15 @@ bot = telebot.TeleBot(TELEGRAM_TOKEN)
 client = Groq(api_key=GROQ_API_KEY)
 app = Flask(__name__)
 
-# Configurar Webhook automáticamente al iniciar en la nube con Gunicorn
+# Configurar Webhook en Render
 url_render = os.environ.get("RENDER_EXTERNAL_URL")
 if url_render:
     try:
         bot.remove_webhook()
         bot.set_webhook(url=f"{url_render}/{TELEGRAM_TOKEN}")
-        print("Webhook configurado correctamente en Render.")
+        print("Webhook registrado con exito en Render.")
     except Exception as e:
-        print(f"Error al configurar el webhook: {e}")
+        print(f"Error registrando Webhook: {e}")
 
 MODELOS_GROQ = [
     "openai/gpt-oss-120b",
@@ -117,19 +117,8 @@ def enviar_mensaje_seguro(chat_id, texto, reply_to_id=None):
             if parte.strip():
                 bot.send_message(chat_id, parte)
 
-@app.route(f"/{TELEGRAM_TOKEN}", methods=["POST"])
-def webhook():
-    json_string = request.get_data().decode("utf-8")
-    update = telebot.types.Update.de_json(json_string)
-    bot.process_new_updates([update])
-    return "OK", 200
-
-@app.route("/", methods=["GET"])
-def index():
-    return "¡Rina está activa en la nube!", 200
-
 @bot.message_handler(func=lambda message: True)
-def responder(message):
+def responder_mensaje(message):
     chat_id = message.chat.id
     user_text = message.text
 
@@ -148,7 +137,8 @@ def responder(message):
             )
             texto_respuesta = completion.choices[0].message.content
             break
-        except:
+        except Exception as e:
+            print(f"Error con modelo {modelo}: {e}")
             continue
 
     if texto_respuesta:
@@ -185,6 +175,19 @@ def responder(message):
                 enviar_mensaje_seguro(chat_id, ejercicios)
         else:
             enviar_mensaje_seguro(chat_id, texto_respuesta, reply_to_message_id=message.message_id)
+
+@app.route(f"/{TELEGRAM_TOKEN}", methods=["POST"])
+def webhook():
+    if request.headers.get('content-type') == 'application/json':
+        json_string = request.get_data().decode("utf-8")
+        update = telebot.types.Update.de_json(json_string)
+        bot.process_new_updates([update])
+        return "OK", 200
+    return "Forbidden", 403
+
+@app.route("/", methods=["GET"])
+def index():
+    return "¡Rina está viva en la nube!", 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
