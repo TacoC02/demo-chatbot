@@ -4,7 +4,6 @@ from flask import Flask, request
 from groq import Groq
 import urllib.parse
 import matplotlib.pyplot as plt
-import numpy as np
 import io
 
 # ======================================================
@@ -13,19 +12,9 @@ import io
 TELEGRAM_TOKEN = os.environ.get("TELEGRAM_TOKEN", "8839280096:AAHnvC5q6oRd43K2nLbE8bZJegqyAyYetbg")
 GROQ_API_KEY = os.environ.get("GROQ_API_KEY", "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")
 
-bot = telebot.TeleBot(TELEGRAM_TOKEN)
+bot = telebot.TeleBot(TELEGRAM_TOKEN, threaded=False)
 client = Groq(api_key=GROQ_API_KEY)
 app = Flask(__name__)
-
-# Configurar Webhook en Render
-url_render = os.environ.get("RENDER_EXTERNAL_URL")
-if url_render:
-    try:
-        bot.remove_webhook()
-        bot.set_webhook(url=f"{url_render}/{TELEGRAM_TOKEN}")
-        print("Webhook registrado con exito en Render.")
-    except Exception as e:
-        print(f"Error registrando Webhook: {e}")
 
 MODELOS_GROQ = [
     "openai/gpt-oss-120b",
@@ -187,7 +176,7 @@ def webhook():
 
 @app.route("/", methods=["GET"])
 def index():
-    return "¡Rina está viva en la nube!", 200
+    return "¡Rina está activa en la nube!", 200
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=int(os.environ.get("PORT", 5000)))
