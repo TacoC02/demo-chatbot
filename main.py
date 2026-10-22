@@ -94,12 +94,12 @@ def generar_grafico_matematico(expresion):
         return generar_circunferencia_esquema()
     return None
 
-def enviar_mensaje_seguro(chat_id, texto, reply_to_id=None):
+def enviar_mensaje_seguro(chat_id, texto, reply_to_message_id=None):
     if not texto or not texto.strip():
         return
     LIMITE = 3500
     if len(texto) <= LIMITE:
-        bot.send_message(chat_id, texto, reply_to_message_id=reply_to_id)
+        bot.send_message(chat_id, texto, reply_to_message_id=reply_to_message_id)
     else:
         for i in range(0, len(texto), LIMITE):
             parte = texto[i:i+LIMITE]
